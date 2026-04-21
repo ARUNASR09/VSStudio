@@ -1,0 +1,27 @@
+location: eastus
+apiVersion: 2023-05-01
+name: courses-group
+type: Microsoft.ContainerInstance/containerGroups
+properties:
+  osType: Linux
+  ipAddress:
+    type: Public
+    ports:
+      - protocol: Tcp
+        port: 80
+  containers:
+    - name: mysql
+      properties:
+        image: rnsampletesteastus.azurecr.io/mysql-courses:v1
+        resources: { requests: { cpu: 0.5, memoryInGB: 1.5 } }
+        ports: [ { protocol: Tcp, port: 3306 } ]
+    - name: php
+      properties:
+        image: rnsampletesteastus.azurecr.io/phpapp:v1
+        resources: { requests: { cpu: 0.5, memoryInGB: 0.5 } }
+        ports: [ { protocol: Tcp, port: 80 } ]
+
+  imageRegistryCredentials:
+    - server: rnsampletesteastus.azurecr.io
+      username: rnsampletesteastus
+      password: "n6KvZ0s7NxVXmzjjvLHrx+YnT+Wpq0UJI10HM7N+/7+ACRDXNa7u"
