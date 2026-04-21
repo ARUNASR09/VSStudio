@@ -1,0 +1,63 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location":{"value":"eastus"},
+        "storageAccountName": {"value":"saeusdev12340"},
+        "vnet":{
+            "value":
+            {"name":"vnet-eus-dev-01",
+             "addressprefix":["10.0.0.0/16"],
+             "subnets":[
+                {
+                    "name":"snet-eus-dev-web-01",
+                    "prefix":"10.0.0.0/24"
+                },
+                {
+                    "name":"snet-eus-dev-db-01",
+                    "prefix":"10.0.1.0/24"
+                }
+             ]
+
+            
+            }
+        },
+        
+    "nsgrules":{
+        "value": {
+            "name":"nsg-eus-dev-01",
+            "rules":[{
+                        "name":"allowhttp",
+                        "properties" :{
+                        "description":"allowhttp",
+                        "protocol": "tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "80",
+                        "sourceAddressPrefix": "*",
+                        "destinationAddressPrefix":"10.0.0.4",
+                        "access":"allow", 
+                        "priority":"400",
+                        "direction":"inbound"
+                        }
+
+                    },
+                    {
+                        "name":"allowssh",
+                        "properties":{
+                        "description":"allowssh",
+                        "protocol": "tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "22",
+                        "sourceAddressPrefix": "*",
+                        "destinationAddressPrefix":"10.0.0.4",
+                        "access":"allow", 
+                        "priority":"410",
+                        "direction":"inbound"  
+                        } 
+                    }
+                ]
+            }
+        }
+    }
+}
+

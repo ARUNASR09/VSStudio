@@ -1,0 +1,451 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "2003641089288757302"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "vnet": {
+      "type": "object"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "nsgrules": {
+      "type": "object"
+    },
+    "windowsconfig": {
+      "type": "object"
+    },
+    "windowspassword": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "subnetattachs": [
+      {
+        "vnet_name": "[parameters('vnet').name]",
+        "snet_name": "[parameters('vnet').subnets[0].name]",
+        "prefix": "[parameters('vnet').subnets[0].prefix]"
+      },
+      {
+        "vnet_name": "[parameters('vnet').name]",
+        "snet_name": "[parameters('vnet').subnets[1].name]",
+        "prefix": "[parameters('vnet').subnets[1].prefix]"
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "dev-network",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[parameters('vnet').name]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "addressprefix": {
+            "value": "[parameters('vnet').addressprefix]"
+          },
+          "subnet": {
+            "value": "[parameters('vnet').subnets]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "8264692645474505051"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "Virtual network Name"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "location"
+              }
+            },
+            "addressprefix": {
+              "type": "array",
+              "metadata": {
+                "description": "Addressprefixes for the vnet"
+              }
+            },
+            "subnet": {
+              "type": "array",
+              "metadata": {
+                "description": "subnet names to be created"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2025-01-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "copy": [
+                  {
+                    "name": "subnets",
+                    "count": "[length(parameters('subnet'))]",
+                    "input": {
+                      "name": "[parameters('subnet')[copyIndex('subnets')].name]",
+                      "properties": {
+                        "addressPrefix": "[parameters('subnet')[copyIndex('subnets')].prefix]"
+                      }
+                    }
+                  }
+                ],
+                "addressSpace": {
+                  "addressPrefixes": "[parameters('addressprefix')]"
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "subnetIds": {
+              "type": "array",
+              "copy": {
+                "count": "[length(parameters('subnet'))]",
+                "input": {
+                  "name": "[parameters('subnet')[copyIndex()].name]",
+                  "id": "[resourceId('Microsoft.Network/networkInterfaces/Subnets', parameters('name'), parameters('subnet')[copyIndex()].name)]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "sadevname",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "9050579530517782002"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string",
+              "metadata": {
+                "description": "storage Name"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "location"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2021-02-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "kind": "StorageV2",
+              "sku": {
+                "name": "Standard_LRS"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "nsg_dev_eus_01",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "name": {
+            "value": "[parameters('nsgrules').name]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "nsgrules": {
+            "value": "[parameters('nsgrules').rules]"
+          },
+          "subnetattach": {
+            "value": "[variables('subnetattachs')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "8638501513035897267"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "nsgrules": {
+              "type": "array"
+            },
+            "subnetattach": {
+              "type": "array"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2025-01-01",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "copy": [
+                  {
+                    "name": "securityRules",
+                    "count": "[length(parameters('nsgrules'))]",
+                    "input": "[parameters('nsgrules')[copyIndex('securityRules')]]"
+                  }
+                ]
+              }
+            },
+            {
+              "copy": {
+                "name": "subnetassoc",
+                "count": "[length(parameters('subnetattach'))]"
+              },
+              "type": "Microsoft.Network/virtualNetworks/subnets",
+              "apiVersion": "2025-01-01",
+              "name": "[format('{0}/{1}', parameters('subnetattach')[copyIndex()].vnet_name, parameters('subnetattach')[copyIndex()].snet_name)]",
+              "properties": {
+                "addressPrefix": "[parameters('subnetattach')[copyIndex()].prefix]",
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('name'))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('name'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'dev-network')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "windows-vm",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "Name": {
+            "value": "[parameters('windowsconfig').Name]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "VMSize": {
+            "value": "[parameters('windowsconfig').VMSize]"
+          },
+          "Adminuser": {
+            "value": "[parameters('windowsconfig').Adminuser]"
+          },
+          "Adminpwd": {
+            "value": "[parameters('windowspassword')]"
+          },
+          "VMCount": {
+            "value": "[parameters('windowsconfig').VMCount]"
+          },
+          "subnetId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'dev-network'), '2025-04-01').outputs.subnetIds.value[0].id]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "14114496621561155712"
+            }
+          },
+          "parameters": {
+            "Name": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "VMSize": {
+              "type": "string"
+            },
+            "Adminuser": {
+              "type": "string",
+              "defaultValue": "azureadmin"
+            },
+            "Adminpwd": {
+              "type": "string"
+            },
+            "VMCount": {
+              "type": "int"
+            },
+            "subnetId": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "copy": [
+              {
+                "name": "varvmindex",
+                "count": "[length(range(0, parameters('VMCount')))]",
+                "input": "[range(0, parameters('VMCount'))[copyIndex('varvmindex')]]"
+              },
+              {
+                "name": "varvmNames",
+                "count": "[length(variables('varvmindex'))]",
+                "input": "[format('vm-{0}-{1}', parameters('Name'), variables('varvmindex')[copyIndex('varvmNames')])]"
+              },
+              {
+                "name": "varNicNames",
+                "count": "[length(variables('varvmindex'))]",
+                "input": "[format('nic-{0}-{1}', parameters('Name'), variables('varvmindex')[copyIndex('varNicNames')])]"
+              }
+            ]
+          },
+          "resources": [
+            {
+              "copy": {
+                "name": "networkInterface",
+                "count": "[length(variables('varNicNames'))]"
+              },
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2025-01-01",
+              "name": "[variables('varNicNames')[copyIndex()]]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "IP-Config",
+                    "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                        "id": "[parameters('subnetId')]"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "copy": {
+                "name": "Vmcompute",
+                "count": "[length(variables('varvmNames'))]"
+              },
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2025-04-01",
+              "name": "[variables('varvmNames')[copyIndex()]]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('VMSize')]"
+                },
+                "osProfile": {
+                  "computerName": "[variables('varvmNames')[copyIndex()]]",
+                  "adminUsername": "[parameters('Adminuser')]",
+                  "adminPassword": "[parameters('Adminpwd')]"
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "MicrosoftWindowsServer",
+                    "offer": "WindowsServer",
+                    "sku": "2025-Datacenter",
+                    "version": "latest"
+                  },
+                  "osDisk": {
+                    "createOption": "FromImage",
+                    "managedDisk": {
+                      "storageAccountType": "Standard_LRS"
+                    }
+                  }
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('varNicNames')[copyIndex()])]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('varNicNames')[copyIndex()])]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'dev-network')]",
+        "[resourceId('Microsoft.Resources/deployments', 'nsg_dev_eus_01')]"
+      ]
+    }
+  ]
+}
