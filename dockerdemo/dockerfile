@@ -1,0 +1,27 @@
+# Use official Microsoft .NET runtime as base image
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+
+
+# Set environment variables
+
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+
+
+# Expose port that the application will run on
+
+EXPOSE 80
+
+
+# Copy application files into container
+
+WORKDIR /app
+
+COPY . .
+
+
+# Set the entry point for the container
+
+ENTRYPOINT ["dotnet", "MyApp.dll"]
